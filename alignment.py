@@ -21,3 +21,5 @@ def align(
         :return: alignment cost, alignment 1, alignment 2
     """
 
+    
+
