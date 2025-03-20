@@ -21,12 +21,6 @@ def align(
         :return: alignment cost, alignment 1, alignment 2
     """
 
-    # print(f"Aligning sequences '{seq1}' and '{seq2}'")
-    # print(f"Match award: {match_award}, indel penalty: {indel_penalty}, substitution penalty: {sub_penalty}")
-    # print(f"Banded width: {banded_width}")
-
-    # matrix = TwoDimensionalListManager
-
     # Compress the penalty values into a single dict for easier access
     penalties = {
         'match': match_award,
@@ -39,12 +33,7 @@ def align(
     else:
         matrix = banded_edit(penalties, seq1, seq2, banded_width)
 
-    # print("Computed Matrix:")
-    # print_matrix(matrix)
-
     path_tuple = find_path(penalties, gap, matrix, seq1, seq2)
-
-    # print(f"Path Tuple: {path_tuple}")
 
     return path_tuple
 
@@ -61,21 +50,11 @@ def edit(penalties: dict, x: str, y: str) -> dict:
     for i in range(1, len(x) + 1):
         for j in range(1, len(y) + 1):
 
-            ## Broken out for debugging
-            # print(f"Diag:  {diff(penalties, x[i - 1], y[j - 1]) + matrix[(i - 1, j - 1)]}")
-            # print(f"up: {penalties["indel"] + matrix[(i, j - 1)]}")
-            # print(f"Left: {penalties["indel"] + matrix[(i - 1, j)]}")
-
-            # print(f"Matrix 0,1: {matrix[(0, 1)]}")
-
             matrix[(i, j)] = min(
                 diff(penalties, x[i - 1], y[j - 1]) + matrix[(i - 1, j - 1)],
                 penalties["indel"] + matrix[(i, j - 1)],
                 penalties["indel"] + matrix[(i - 1, j)]
             )
-            # print("--------------------------------")
-            # print_matrix(matrix)
-            # print("--------------------------------")
 
     return matrix
 
@@ -89,37 +68,17 @@ def banded_edit(penalties: dict, x: str, y: str, banded_width: int) -> dict:
     
     for i in range(1, len(x) + 1):
 
-        # if i - banded_width < 1:
-        #     start = 1
-        # else:
-        #     start = i - banded_width
-
-        # if i + banded_width > len(y):
-        #     end = len(y)
-        # else:
-        #     end = i + banded_width
-
         for j in range(get_start(i, banded_width), get_end(i, banded_width, len(y)) + 1):
 
             diag = calc_diag(penalties, matrix, x, y, i, j)
             up = calc_up(penalties, matrix, i, j)
             left = calc_left(penalties, matrix, i, j)
 
-            # ## Broken out for debugging
-            # print(f"Diag:  {diag}")
-            # print(f"up: {up}")
-            # print(f"Left: {left}")
-
-            # print(f"Matrix 0,1: {matrix[(0, 1)]}")
-
             matrix[(i, j)] = min(
                 diag,
                 up,
                 left
             )
-            # print("--------------------------------")
-            # print_matrix(matrix)
-            # print("--------------------------------")
 
     return matrix
 
