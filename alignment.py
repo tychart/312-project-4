@@ -21,6 +21,10 @@ def align(
         :return: alignment cost, alignment 1, alignment 2
     """
 
+    print(f"Aligning sequences '{seq1}' and '{seq2}'")
+    print(f"Match award: {match_award}, indel penalty: {indel_penalty}, substitution penalty: {sub_penalty}")
+    print(f"Banded width: {banded_width}")
+
     # matrix = TwoDimensionalListManager
 
     # Compress the penalty values into a single dict for easier access
@@ -35,7 +39,12 @@ def align(
     else:
         matrix = banded_edit(penalties, seq1, seq2, banded_width)
 
+    print("Computed Matrix:")
     print_matrix(matrix)
+
+    find_path(penalties, gap, matrix, seq1, seq2)
+
+
 
 
 
@@ -53,7 +62,7 @@ def edit(penalties: dict, x: str, y: str) -> dict:
 
             ## Broken out for debugging
             # print(f"Diag:  {diff(penalties, x[i - 1], y[j - 1]) + matrix[(i - 1, j - 1)]}")
-            # print(f"Top: {penalties["indel"] + matrix[(i, j - 1)]}")
+            # print(f"up: {penalties["indel"] + matrix[(i, j - 1)]}")
             # print(f"Left: {penalties["indel"] + matrix[(i - 1, j)]}")
 
             # print(f"Matrix 0,1: {matrix[(0, 1)]}")
@@ -63,9 +72,9 @@ def edit(penalties: dict, x: str, y: str) -> dict:
                 penalties["indel"] + matrix[(i, j - 1)],
                 penalties["indel"] + matrix[(i - 1, j)]
             )
-            print("--------------------------------")
-            print_matrix(matrix)
-            print("--------------------------------")
+            # print("--------------------------------")
+            # print_matrix(matrix)
+            # print("--------------------------------")
 
     return matrix
 
@@ -91,27 +100,88 @@ def banded_edit(penalties: dict, x: str, y: str, banded_width: int) -> dict:
 
         for j in range(get_start(i, banded_width), get_end(i, banded_width, len(y)) + 1):
 
-            diag = get_diag(penalties, matrix, x, y, i, j)
-            top = get_top(penalties, matrix, i, j)
-            left = get_left(penalties, matrix, i, j)
+            diag = calc_diag(penalties, matrix, x, y, i, j)
+            up = calc_up(penalties, matrix, i, j)
+            left = calc_left(penalties, matrix, i, j)
 
-            ## Broken out for debugging
-            print(f"Diag:  {diag}")
-            print(f"Top: {top}")
-            print(f"Left: {left}")
+            # ## Broken out for debugging
+            # print(f"Diag:  {diag}")
+            # print(f"up: {up}")
+            # print(f"Left: {left}")
 
             # print(f"Matrix 0,1: {matrix[(0, 1)]}")
 
             matrix[(i, j)] = min(
                 diag,
-                top,
+                up,
                 left
             )
-            print("--------------------------------")
-            print_matrix(matrix)
-            print("--------------------------------")
+            # print("--------------------------------")
+            # print_matrix(matrix)
+            # print("--------------------------------")
 
     return matrix
+
+def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[int, str, str]:
+    
+    outstr1 = ""
+    outstr2 = ""
+
+    i = len(x)
+    j = len(y)
+    
+    while i > 0 and j > 0:
+        
+        print("-------------------------------------------------")
+
+        diag = calc_diag(penalties, matrix, x, y, i, j)
+        up = calc_up(penalties, matrix, i, j)
+        left = calc_left(penalties, matrix, i, j)
+
+        lowest_cost = diag
+        lowest_direction = "diag"
+        path_to_next_x = -1
+        path_to_next_y = -1
+
+        if up < lowest_cost:
+            lowest_cost = up
+            lowest_direction = "up"
+            path_to_next_x = 0
+            path_to_next_y = -1
+        
+        if left < lowest_cost:
+            lowest_cost = left
+            lowest_direction = "left"
+            path_to_next_x = -1
+            path_to_next_y = 0
+            
+        print(f"i: {i}, j: {j}, value: {matrix[(i, j)]}, lowest_direction: {lowest_direction}")
+
+        i += path_to_next_y
+        j += path_to_next_x
+
+        # print(lowest_direction)
+        
+
+        if lowest_direction == "diag":
+            outstr1 = x[i] + outstr1
+            outstr2 = y[j] + outstr2
+        elif lowest_direction == "up":
+            outstr1 = x[i] + outstr1
+            outstr2 = gap + outstr2
+        elif lowest_direction == "left":
+            outstr1 = gap + outstr1
+            outstr2 = y[i] + outstr2
+        
+        print(f"outstr1: {outstr1}")
+        print(f"outstr2: {outstr2}")
+
+        print("-------------------------------------------------")
+        
+
+    
+
+
 
 def get_start(i, banded_width):
     if i - banded_width < 1:
@@ -123,26 +193,30 @@ def get_end(i, banded_width, len_y):
         return len_y
     return i + banded_width
 
-def get_diag(penalties: dict, matrix: dict, x, y, i, j):
+def calc_diag(penalties: dict, matrix: dict, x, y, i, j):
     try:
         return diff(penalties, x[i - 1], y[j - 1]) + matrix[(i - 1, j - 1)]
     except KeyError:
         return float("inf")
 
-def get_top(penalties: dict, matrix: dict, i, j):
+def calc_up(penalties: dict, matrix: dict, i, j):
     try:
-        return penalties["indel"] + matrix[(i, j - 1)]
+        return penalties["indel"] + matrix[(i - 1, j)]
+        # return penalties["indel"] + matrix[(i, j - 1)]
     except KeyError:
         return float("inf")
 
-def get_left(penalties: dict, matrix: dict, i, j):
+def calc_left(penalties: dict, matrix: dict, i, j):
     try:
-        return penalties["indel"] + matrix[(i - 1, j)]
+        return penalties["indel"] + matrix[(i, j - 1)]
+        # return penalties["indel"] + matrix[(i - 1, j)]
     except KeyError:
         return float("inf")
 
 def diff(penalties: dict, char1, char2):
     return penalties["match"] if char1 == char2 else penalties["sub"]
+
+
 
 
 def print_matrix(matrix: dict):
@@ -292,5 +366,5 @@ def print_matrix(matrix: dict):
 # print_matrix(matrix)
 
 # align("THARS", "OTHER")
-# align("ATGCATGC", "ATGGTGC", banded_width=3)
-align("ATGCATGC", "ATGGTGC")
+align("ATGCATGC", "ATGGTGC", banded_width=3)
+# align("ATGCATGC", "ATGGTGC")
