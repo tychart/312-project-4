@@ -21,9 +21,9 @@ def align(
         :return: alignment cost, alignment 1, alignment 2
     """
 
-    print(f"Aligning sequences '{seq1}' and '{seq2}'")
-    print(f"Match award: {match_award}, indel penalty: {indel_penalty}, substitution penalty: {sub_penalty}")
-    print(f"Banded width: {banded_width}")
+    # print(f"Aligning sequences '{seq1}' and '{seq2}'")
+    # print(f"Match award: {match_award}, indel penalty: {indel_penalty}, substitution penalty: {sub_penalty}")
+    # print(f"Banded width: {banded_width}")
 
     # matrix = TwoDimensionalListManager
 
@@ -39,13 +39,14 @@ def align(
     else:
         matrix = banded_edit(penalties, seq1, seq2, banded_width)
 
-    print("Computed Matrix:")
-    print_matrix(matrix)
+    # print("Computed Matrix:")
+    # print_matrix(matrix)
 
-    find_path(penalties, gap, matrix, seq1, seq2)
+    path_tuple = find_path(penalties, gap, matrix, seq1, seq2)
 
+    # print(f"Path Tuple: {path_tuple}")
 
-
+    return path_tuple
 
 
 
@@ -132,7 +133,7 @@ def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[
     
     while i > 0 and j > 0:
         
-        print("-------------------------------------------------")
+        # print("-------------------------------------------------")
 
         diag = calc_diag(penalties, matrix, x, y, i, j)
         up = calc_up(penalties, matrix, i, j)
@@ -155,7 +156,7 @@ def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[
             path_to_next_x = -1
             path_to_next_y = 0
             
-        print(f"i: {i}, j: {j}, value: {matrix[(i, j)]}, lowest_direction: {lowest_direction}")
+        # print(f"i: {i}, j: {j}, value: {matrix[(i, j)]}, lowest_direction: {lowest_direction}")
 
         i += path_to_next_y
         j += path_to_next_x
@@ -177,8 +178,23 @@ def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[
         print(f"outstr2: {outstr2}")
 
         print("-------------------------------------------------")
-        
+    
+    while i > 0 or j > 0:
+        if i > 0:
+            outstr1 = x[i] + outstr1
+            i -= 1
+        else:
+            outstr1 = gap + outstr1
 
+
+        if j > 0:
+            outstr2 = y[j] + outstr2
+            j -= 1
+        else:
+            outstr2 = gap + outstr2
+
+
+    return (matrix[(len(x), len(y))], outstr1, outstr2)
     
 
 
@@ -366,5 +382,29 @@ def print_matrix(matrix: dict):
 # print_matrix(matrix)
 
 # align("THARS", "OTHER")
-align("ATGCATGC", "ATGGTGC", banded_width=3)
+# align("ATGCATGC", "ATGGTGC", banded_width=3)
 # align("ATGCATGC", "ATGGTGC")
+
+
+
+# def test_small_alignment(align):
+#     score, aseq1, aseq2 = align('polynomial', 'exponential')
+#     if score == -1 and aseq1 == 'polyn-omial' and aseq2 == 'exponential':
+#         print("Test passed: Alignment is correct.")
+#     else:
+#         print("Test failed:")
+#         if score != -1:
+#             print(f"  Expected score: -1, but got: {score}")
+#         if aseq1 != 'polyn-omial':
+#             print(f"  Expected aseq1: 'polyn-omial', but got: {aseq1}")
+#         if aseq2 != 'exponential':
+#             print(f"  Expected aseq2: 'exponential', but got: {aseq2}")
+
+# test_small_alignment(align)
+
+
+# def test_tiny_dna_alignment(align):
+#     score, aseq1, aseq2 = align('ATGCATGC', 'ATGGTGC')
+#     assert score == -12
+#     assert aseq1 == 'ATGCATGC'
+#     assert aseq2 == 'ATG-GTGC'
