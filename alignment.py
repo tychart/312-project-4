@@ -123,76 +123,127 @@ def banded_edit(penalties: dict, x: str, y: str, banded_width: int) -> dict:
 
     return matrix
 
+# def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[int, str, str]:
+    
+#     outstr1 = ""
+#     outstr2 = ""
+
+#     i = len(x)
+#     j = len(y)
+    
+#     while i > 0 and j > 0:
+        
+#         # print("-------------------------------------------------")
+
+#         diag = calc_diag(penalties, matrix, x, y, i, j)
+#         up = calc_up(penalties, matrix, i, j)
+#         left = calc_left(penalties, matrix, i, j)
+
+#         lowest_cost = diag
+#         lowest_direction = "diag"
+#         path_to_next_x = -1
+#         path_to_next_y = -1
+
+#         if up < lowest_cost:
+#             lowest_cost = up
+#             lowest_direction = "up"
+#             path_to_next_x = 0
+#             path_to_next_y = -1
+        
+#         if left < lowest_cost:
+#             lowest_cost = left
+#             lowest_direction = "left"
+#             path_to_next_x = -1
+#             path_to_next_y = 0
+            
+#         # print(f"i: {i}, j: {j}, value: {matrix[(i, j)]}, lowest_direction: {lowest_direction}")
+
+#         i += path_to_next_y
+#         j += path_to_next_x
+
+#         # print(lowest_direction)
+        
+
+#         if lowest_direction == "diag":
+#             outstr1 = x[i] + outstr1
+#             outstr2 = y[j] + outstr2
+#         elif lowest_direction == "up":
+#             outstr1 = x[i] + outstr1
+#             outstr2 = gap + outstr2
+#         elif lowest_direction == "left":
+#             outstr1 = gap + outstr1
+#             outstr2 = y[i] + outstr2
+        
+#         print(f"outstr1: {outstr1}")
+#         print(f"outstr2: {outstr2}")
+
+#         print("-------------------------------------------------")
+    
+#     while i > 0 or j > 0:
+#         if i > 0:
+#             outstr1 = x[i] + outstr1
+#             i -= 1
+#         else:
+#             outstr1 = gap + outstr1
+
+
+#         if j > 0:
+#             outstr2 = y[j] + outstr2
+#             j -= 1
+#         else:
+#             outstr2 = gap + outstr2
+
+
+#     return (matrix[(len(x), len(y))], outstr1, outstr2)
+
 def find_path(penalties: dict, gap: str, matrix: dict, x: str, y: str) -> tuple[int, str, str]:
     
-    outstr1 = ""
-    outstr2 = ""
+    # print_matrix(matrix)
+
+    backwardsoutstr1 = ""
+    backwardsoutstr2 = ""
 
     i = len(x)
     j = len(y)
-    
-    while i > 0 and j > 0:
-        
-        # print("-------------------------------------------------")
 
-        diag = calc_diag(penalties, matrix, x, y, i, j)
-        up = calc_up(penalties, matrix, i, j)
-        left = calc_left(penalties, matrix, i, j)
-
-        lowest_cost = diag
-        lowest_direction = "diag"
-        path_to_next_x = -1
-        path_to_next_y = -1
-
-        if up < lowest_cost:
-            lowest_cost = up
-            lowest_direction = "up"
-            path_to_next_x = 0
-            path_to_next_y = -1
-        
-        if left < lowest_cost:
-            lowest_cost = left
-            lowest_direction = "left"
-            path_to_next_x = -1
-            path_to_next_y = 0
-            
-        # print(f"i: {i}, j: {j}, value: {matrix[(i, j)]}, lowest_direction: {lowest_direction}")
-
-        i += path_to_next_y
-        j += path_to_next_x
-
-        # print(lowest_direction)
-        
-
-        if lowest_direction == "diag":
-            outstr1 = x[i] + outstr1
-            outstr2 = y[j] + outstr2
-        elif lowest_direction == "up":
-            outstr1 = x[i] + outstr1
-            outstr2 = gap + outstr2
-        elif lowest_direction == "left":
-            outstr1 = gap + outstr1
-            outstr2 = y[i] + outstr2
-        
-        print(f"outstr1: {outstr1}")
-        print(f"outstr2: {outstr2}")
-
-        print("-------------------------------------------------")
-    
     while i > 0 or j > 0:
-        if i > 0:
-            outstr1 = x[i] + outstr1
+        if i > 0 and j > 0:
+            diag = calc_diag(penalties, matrix, x, y, i, j)
+            left = calc_left(penalties, matrix, i, j)
+            up = calc_up(penalties, matrix, i, j)
+
+            """
+            In case there is more than one optimal alignment, 
+            break ties with the following preference order: diagonal, left, top 
+            (put sequence 1 on the left of the matrix and sequence 2 on the top of the matrix).
+            """
+
+            if matrix[(i, j)] == diag:
+                backwardsoutstr1 += x[i - 1]
+                backwardsoutstr2 += y[j - 1]
+                i -= 1
+                j -= 1
+            elif matrix[(i, j)] == left:
+                backwardsoutstr1 += gap
+                backwardsoutstr2 += y[j - 1]
+                j -= 1
+            elif matrix[(i, j)] == up:
+                backwardsoutstr1 += x[i - 1]
+                backwardsoutstr2 += gap
+                i -= 1
+            else:
+                raise Exception("Error in backtracking") # Should not happen
+        elif i > 0:
+            backwardsoutstr1 += x[i - 1]
+            backwardsoutstr2 += gap
             i -= 1
-        else:
-            outstr1 = gap + outstr1
-
-
-        if j > 0:
-            outstr2 = y[j] + outstr2
+        elif j > 0:
+            backwardsoutstr1 += gap
+            backwardsoutstr2 += y[j - 1]
             j -= 1
-        else:
-            outstr2 = gap + outstr2
 
+    outstr1 = backwardsoutstr1[::-1]
+    outstr2 = backwardsoutstr2[::-1]
 
     return (matrix[(len(x), len(y))], outstr1, outstr2)
     
@@ -400,8 +451,23 @@ def print_matrix(matrix: dict):
 #         if aseq2 != 'exponential':
 #             print(f"  Expected aseq2: 'exponential', but got: {aseq2}")
 
+# def test_small_alignment_backtrack(align):
+#     score, aseq1, aseq2 = align('ATATATATAT', 'TATATATATA')
+#     if score == -17 and aseq1 == 'ATATATATAT-' and aseq2 == '-TATATATATA':
+#         print("Test passed: Alignment is correct.")
+#     else:
+#         print("Test failed:")
+#         if score != -17:
+#             print(f"  Expected score: -17, but got: {score}")
+#         if aseq1 != 'ATATATATAT-':
+#             print(f"  Expected aseq1: 'ATATATATAT-', but got: {aseq1}")
+#         if aseq2 != '-TATATATATA':
+#             print(f"  Expected aseq2: '-TATATATATA', but got: {aseq2}") 
+#     # assert score == -17
+#     # assert aseq1 == 'ATATATATAT-'
+#     # assert aseq2 == '-TATATATATA'
 # test_small_alignment(align)
-
+# test_small_alignment_backtrack(align)
 
 # def test_tiny_dna_alignment(align):
 #     score, aseq1, aseq2 = align('ATGCATGC', 'ATGGTGC')
