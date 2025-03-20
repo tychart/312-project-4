@@ -30,7 +30,10 @@ def align(
         'sub': sub_penalty
     }
 
-    matrix = edit(penalties, seq1, seq2)
+    if banded_width == -1:
+        matrix = edit(penalties, seq1, seq2)
+    else:
+        matrix = banded_edit(penalties, seq1, seq2, banded_width)
 
     print_matrix(matrix)
 
@@ -65,6 +68,78 @@ def edit(penalties: dict, x: str, y: str) -> dict:
             print("--------------------------------")
 
     return matrix
+
+def banded_edit(penalties: dict, x: str, y: str, banded_width: int) -> dict:
+    matrix = {}
+        
+    for i in range(banded_width + 1):
+        matrix[(i, 0)] = i * penalties["indel"]
+    for j in range(banded_width + 1):
+        matrix[(0, j)] = j * penalties["indel"]
+    
+    for i in range(1, len(x) + 1):
+
+        # if i - banded_width < 1:
+        #     start = 1
+        # else:
+        #     start = i - banded_width
+
+        # if i + banded_width > len(y):
+        #     end = len(y)
+        # else:
+        #     end = i + banded_width
+
+        for j in range(get_start(i, banded_width), get_end(i, banded_width, len(y)) + 1):
+
+            diag = get_diag(penalties, matrix, x, y, i, j)
+            top = get_top(penalties, matrix, i, j)
+            left = get_left(penalties, matrix, i, j)
+
+            ## Broken out for debugging
+            print(f"Diag:  {diag}")
+            print(f"Top: {top}")
+            print(f"Left: {left}")
+
+            # print(f"Matrix 0,1: {matrix[(0, 1)]}")
+
+            matrix[(i, j)] = min(
+                diag,
+                top,
+                left
+            )
+            print("--------------------------------")
+            print_matrix(matrix)
+            print("--------------------------------")
+
+    return matrix
+
+def get_start(i, banded_width):
+    if i - banded_width < 1:
+        return 1
+    return i - banded_width
+
+def get_end(i, banded_width, len_y):
+    if i + banded_width > len_y:
+        return len_y
+    return i + banded_width
+
+def get_diag(penalties: dict, matrix: dict, x, y, i, j):
+    try:
+        return diff(penalties, x[i - 1], y[j - 1]) + matrix[(i - 1, j - 1)]
+    except KeyError:
+        return float("inf")
+
+def get_top(penalties: dict, matrix: dict, i, j):
+    try:
+        return penalties["indel"] + matrix[(i, j - 1)]
+    except KeyError:
+        return float("inf")
+
+def get_left(penalties: dict, matrix: dict, i, j):
+    try:
+        return penalties["indel"] + matrix[(i - 1, j)]
+    except KeyError:
+        return float("inf")
 
 def diff(penalties: dict, char1, char2):
     return penalties["match"] if char1 == char2 else penalties["sub"]
@@ -217,4 +292,5 @@ def print_matrix(matrix: dict):
 # print_matrix(matrix)
 
 # align("THARS", "OTHER")
-align("THARS", "OTHER")
+# align("ATGCATGC", "ATGGTGC", banded_width=3)
+align("ATGCATGC", "ATGGTGC")
